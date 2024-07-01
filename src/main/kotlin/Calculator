@@ -1,0 +1,24 @@
+=> expr;
+
+expr : Int -> term exprs(term) { exprs };
+exprs [acc = Int] : Int -> PLUS term { val next = acc + term } exprs(next) { exprs }
+    | MINUS term { val next = acc - term } exprs(next) { exprs }
+    | {acc} ;
+
+term : Int -> single terms(single) { terms } ;
+terms [acc = Int] : Int -> MUL single terms({ acc * single }) { terms }
+    | DIV single terms({ acc / single }) { terms }
+    | {acc} ;
+
+single : Int -> LPARENTHESIS expr RPARENTHESIS { expr } | num { num };
+num : Int -> NUMBER { NUMBER.toInt() };
+
+
+PLUS = "+";
+MINUS = "-";
+DIV = "/";
+MUL = "*";
+LPARENTHESIS = "(";
+RPARENTHESIS = ")";
+NUMBER = '[0-9]+';
+WS != '\s+';

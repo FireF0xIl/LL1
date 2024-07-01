@@ -1,0 +1,88 @@
+=> forLoopExpression;
+
+forLoopExpression : Node -> FOR LPARENTHESIS init SEMICOLON condition SEMICOLON iteration RPARENTHESIS
+                        { Node("for statement", listOf(
+                                                  Node(FOR),
+                                                  Node(LPARENTHESIS),
+                                                  init,
+                                                  Node(SEMICOLON[0]),
+                                                  condition,
+                                                  Node(SEMICOLON[1]),
+                                                  iteration,
+                                                  Node(RPARENTHESIS)
+                                                )) };
+
+init : Node -> type VARIABLE ASSIGN VALUE additionalVar({ mutableListOf() })
+{ Node("INIT", listOf(type, Node("variable", VARIABLE), Node("assign", ASSIGN), Node("value", VALUE)) + additionalVar) };
+condition : Node ->
+      VARIABLE comparison VALUE additionalBool ({mutableListOf()})
+       { Node("COND", listOf(Node("variable", VARIABLE), comparison, Node("value", VALUE)) + additionalBool) }
+    | VALUE comparison VARIABLE additionalBool ({mutableListOf()})
+        { Node("COND", listOf(Node("value", VALUE), comparison, Node("variable", VARIABLE)) + additionalBool) };
+iteration : Node ->
+      VARIABLE unaryOperation { Node("ITER", listOf(Node("variable", VARIABLE), unaryOperation)) }
+    | unaryOperation VARIABLE { Node("ITER", listOf(unaryOperation, Node("variable", VARIABLE))) };
+unaryOperation : Node ->
+      INCREMENT { Node("unaryOperation", INCREMENT) }
+    | DECREMENT { Node("unaryOperation", DECREMENT) };
+comparison : Node ->
+      NEQ { Node("comparison", NEQ) }
+    | LE  { Node("comparison", LE) }
+    | GE  { Node("comparison", GE) }
+    | LT  { Node("comparison", LT) }
+    | GT  { Node("comparison", GT) }
+    | EQ  { Node("comparison", EQ) };
+type : Node -> INT { Node("type", INT) };
+
+
+additionalVar [acc = MutableList<Node>] : MutableList<Node> ->
+    COMMA VARIABLE ASSIGN VALUE {acc.addAll(listOf(Node("comma", COMMA), Node("variable", VARIABLE), Node("assign", ASSIGN), Node("value", VALUE)))} additionalVar({acc}) {acc}
+    | {acc};
+
+additionalBool [acc = MutableList<Node>] : MutableList<Node> ->
+    boolOperator
+                        {acc.add(boolOperator)} additionalBool2({acc}) {acc}
+    | {acc};
+
+
+additionalBool2 [acc = MutableList<Node>] : MutableList<Node> ->
+    VARIABLE comparison VALUE
+                        {acc.addAll(listOf(Node("additionalBool", listOf(Node("variable", VARIABLE), comparison, Node("value", VALUE)))))} additionalBool({acc}) {acc}
+    | VALUE comparison VARIABLE
+                             {acc.addAll(listOf(Node("additionalBool", listOf(Node("value", VALUE), comparison, Node("variable", VARIABLE)))))} additionalBool({acc}) {acc}
+    | {acc};
+
+
+
+boolOperator: Node ->
+      AND {Node("boolOperator", "&&")}
+    | OR  {Node("boolOperator", "||")}
+    | XOR {Node("boolOperator", "^")}
+    ;
+
+FOR = "for";
+
+INCREMENT = "++";
+DECREMENT = "--";
+
+AND = "&&";
+OR = "||";
+LE = "<=";
+GE = ">=";
+EQ = "==";
+NEQ = "!=";
+LT = "<";
+GT = ">";
+XOR = "^";
+ASSIGN = "=";
+SEMICOLON = ";";
+COMMA = ",";
+LPARENTHESIS = "(";
+RPARENTHESIS = ")";
+
+INT = "int";
+
+VALUE = '[0-9]+';
+VARIABLE = '[a-zA-Z0-9]+';
+
+WHITESPACE != '\s+';
